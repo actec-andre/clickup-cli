@@ -30,10 +30,10 @@ SCHEMA = 1
 # namespace and by `agent-info`.
 IDS = {
     "team": "90152385271",
-    "space_odoo": "901510167199",
-    "space_monday": "901511188252",
+    "space_marketing": "901511188252",
     "space_magento": "901511189063",
     "space_pim": "901511194855",
+    "space_operations": "901511222465",
 }
 TEAM_ID = IDS["team"]
 

@@ -22,6 +22,13 @@ for Andre or the CLI/agents. The CLI is just one way in; the staff in the web/mo
 real users. So design the board for *them* — few plain-language status stages, few lists, few
 required fields, and exactly one clear owner per task so each person can see "what's mine".
 
+**Keep sensitive data out of ClickUp.** Access is flat — every workspace member sees every
+space/list/task — so task names, descriptions and comments must NOT carry internal financial
+figures (€ amounts, exposure, PO values), personal/HR/health/disciplinary info, or security
+secrets (keys, IPs, passwords). There's little to hide org-wide, but flat visibility leaks
+sensitive detail to everyone. Keep tasks operational and put the sensitive detail in the
+access-controlled `obsidian-rh` vault, linked from the task via `Quelle: <vault path>` instead.
+
 ## Architecture
 
 ```
@@ -60,10 +67,10 @@ Error categories map to exit codes: `config` → 2, `syntax`/`runtime` → 1.
 ## Key IDs (single source of truth: `runner.IDS`)
 
 - Team/Workspace: `90152385271` (RHHOLDING)
-- Space Odoo: `901510167199`
-- Space Monday: `901511188252`
+- Space Marketing: `901511188252` (was "Monday" — Monday.com import leftover)
 - Space Magento: `901511189063`
 - Space Products PIM: `901511194855`
+- Space Operations: `901511222465`
 
 `IDS` and `TEAM_ID` are injected into the exec namespace and drive `agent-info`. Change them
 in `runner.py` only. Member/person IDs are deliberately **not** hard-coded here — resolve them
