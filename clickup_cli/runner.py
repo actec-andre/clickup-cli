@@ -31,7 +31,9 @@ SCHEMA = 1
 IDS = {
     "team": "90152385271",
     "space_odoo": "901510167199",
-    "space_rhholding": "901510675913",
+    "space_monday": "901511188252",
+    "space_magento": "901511189063",
+    "space_pim": "901511194855",
 }
 TEAM_ID = IDS["team"]
 

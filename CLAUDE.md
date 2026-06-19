@@ -38,8 +38,8 @@ clickup_cli/
   Python that runs against a pre-authenticated `cu` client and emits JSON.
 - **Client returns raw JSON** (dicts/lists), not Pydantic models. A generic
   `request()/get()/post()/put()/delete()` escape hatch covers the whole API; convenience
-  methods (`get_teams`, `get_spaces`, `get_tasks`/`iter_tasks`, `create_task`, …) wrap the
-  common endpoints.
+  methods (`get_teams`, `get_spaces`, `get_members`, `get_list`, `get_tasks`/`iter_tasks`,
+  `iter_space_tasks`, `create_task`, `update_task`, `assign`, …) wrap the common endpoints.
 - **Sync** (`httpx.Client`) so exec code is plain synchronous Python (no event loop).
 - **Construction is offline** — no HTTP until the first call, so a dummy token and
   pure-Python snippets work network-free (used heavily in tests).
@@ -61,17 +61,29 @@ Error categories map to exit codes: `config` → 2, `syntax`/`runtime` → 1.
 
 - Team/Workspace: `90152385271` (RHHOLDING)
 - Space Odoo: `901510167199`
-- Space RHHOLDING: `901510675913`
+- Space Monday: `901511188252`
+- Space Magento: `901511189063`
+- Space Products PIM: `901511194855`
 
 `IDS` and `TEAM_ID` are injected into the exec namespace and drive `agent-info`. Change them
-in `runner.py` only.
+in `runner.py` only. Member/person IDs are deliberately **not** hard-coded here — resolve them
+live via `cu.get_members(TEAM_ID)` (ClickUp is the source of truth).
 
 ## API notes
 
 - Base URL: `https://api.clickup.com/api/v2`
 - Auth: token sent **directly** as the `Authorization` header (no `Bearer` prefix).
 - Rate limit: retries 429 up to 3× honoring `Retry-After`; non-2xx raises `ClickUpError`.
-- Tasks paginate at 100/page; `iter_tasks` stops on `last_page` or a short page.
+- Tasks paginate at 100/page; `iter_tasks` stops on `last_page` or a short page;
+  `iter_space_tasks` chains that across every list in a space.
+- Assignees use an add/rem dict on update: `assignees={"add":[id],"rem":[id]}` (IDs are ints);
+  `cu.assign(task_id, add=[...], rem=[...])` wraps it.
+- **Status SETS are UI-only:** API v2 cannot create/edit/delete the status options at
+  space/folder/list level. You can only set a task's status *value* (to one already on its
+  list). List deletion is irreversible; clean list *archiving* isn't exposed in v2.
+- **Cross-space moves are UI-only:** there is no endpoint to move a task/list into another
+  space. `update_task(list=...)` is a no-op; the multi-list endpoint is 403 unless that paid
+  feature is on. Recreate+delete is the only (lossy) CLI workaround.
 
 ## Quick start
 

@@ -152,6 +152,19 @@ class ClickUp:
     def get_space(self, space_id: str) -> dict[str, Any]:
         return self.get(f"/space/{space_id}")
 
+    def get_members(self, team_id: str) -> list[dict[str, Any]]:
+        """Flat list of workspace members (the ``user`` dicts under a team).
+
+        Each entry carries ``id``, ``username``, ``email``, ``role_key`` and more.
+        ``username`` may be ``None`` for invited-but-not-yet-active members, but
+        ``email`` is reliable. Use this to resolve people to assignee IDs live
+        instead of hard-coding them. Returns ``[]`` if ``team_id`` is unknown.
+        """
+        for team in self.get_teams().get("teams", []):
+            if str(team.get("id")) == str(team_id):
+                return [m["user"] for m in team.get("members", [])]
+        return []
+
     # -- convenience: folders / lists -------------------------------------
 
     def get_folders(self, space_id: str, *, archived: bool = False) -> dict[str, Any]:
@@ -165,6 +178,10 @@ class ClickUp:
     def get_folderless_lists(self, space_id: str, *, archived: bool = False) -> dict[str, Any]:
         """Folderless lists in a space. Returns ``{"lists": [...]}``."""
         return self.get(f"/space/{space_id}/list", archived=str(archived).lower())
+
+    def get_list(self, list_id: str) -> dict[str, Any]:
+        """A single list's detail, including its ``statuses`` and ``override_statuses``."""
+        return self.get(f"/list/{list_id}")
 
     # -- convenience: tasks -----------------------------------------------
 
@@ -190,6 +207,19 @@ class ClickUp:
                 break
             page += 1
 
+    def iter_space_tasks(self, space_id: str, **filters: Any) -> Iterator[dict[str, Any]]:
+        """Yield every task across all lists in a space (folderless + folder lists).
+
+        ``filters`` are forwarded to :meth:`iter_tasks` (e.g. ``include_closed``,
+        ``subtasks``, ``archived``). Lists are fetched lazily, so a caller that
+        ``break``s early may avoid the folder lookup entirely.
+        """
+        for lst in self.get_folderless_lists(space_id).get("lists", []):
+            yield from self.iter_tasks(lst["id"], **filters)
+        for folder in self.get_folders(space_id).get("folders", []):
+            for lst in folder.get("lists", []):
+                yield from self.iter_tasks(lst["id"], **filters)
+
     def get_task(self, task_id: str, **params: Any) -> dict[str, Any]:
         return self.get(f"/task/{task_id}", **params)
 
@@ -199,6 +229,19 @@ class ClickUp:
 
     def update_task(self, task_id: str, **fields: Any) -> dict[str, Any]:
         return self.put(f"/task/{task_id}", json=fields)
+
+    def assign(
+        self,
+        task_id: str,
+        add: list[int] | None = None,
+        rem: list[int] | None = None,
+    ) -> dict[str, Any]:
+        """Add and/or remove assignees on a task.
+
+        Wraps ClickUp's non-obvious ``assignees={"add": [...], "rem": [...]}`` update
+        format (member IDs are integers — resolve them via :meth:`get_members`).
+        """
+        return self.update_task(task_id, assignees={"add": add or [], "rem": rem or []})
 
     def delete_task(self, task_id: str) -> dict[str, Any]:
         return self.delete(f"/task/{task_id}")

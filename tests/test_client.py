@@ -128,3 +128,87 @@ def test_generic_get_hits_relative_path():
 
     assert route.called
     assert data["spaces"][0]["name"] == "Odoo"
+
+
+@respx.mock
+def test_get_members_flattens_user_dicts():
+    respx.get(f"{BASE}/team").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "teams": [
+                    {
+                        "id": "T1",
+                        "members": [
+                            {"user": {"id": 1, "email": "a@x.de"}},
+                            {"user": {"id": 2, "username": None, "email": "b@x.de"}},
+                        ],
+                    },
+                    {"id": "T2", "members": [{"user": {"id": 9}}]},
+                ]
+            },
+        )
+    )
+    with ClickUp("pk") as cu:
+        members = cu.get_members("T1")
+
+    assert [m["id"] for m in members] == [1, 2]
+    assert members[1]["email"] == "b@x.de"
+
+
+@respx.mock
+def test_get_members_unknown_team_returns_empty():
+    respx.get(f"{BASE}/team").mock(
+        return_value=httpx.Response(200, json={"teams": [{"id": "T1", "members": []}]})
+    )
+    with ClickUp("pk") as cu:
+        assert cu.get_members("NOPE") == []
+
+
+@respx.mock
+def test_get_list_hits_list_endpoint():
+    respx.get(f"{BASE}/list/L1").mock(
+        return_value=httpx.Response(
+            200, json={"id": "L1", "override_statuses": True, "statuses": [{"status": "todo"}]}
+        )
+    )
+    with ClickUp("pk") as cu:
+        data = cu.get_list("L1")
+
+    assert data["override_statuses"] is True
+    assert data["statuses"][0]["status"] == "todo"
+
+
+@respx.mock
+def test_iter_space_tasks_walks_folderless_and_folder_lists():
+    respx.get(f"{BASE}/space/S1/list").mock(
+        return_value=httpx.Response(200, json={"lists": [{"id": "L1"}]})
+    )
+    respx.get(f"{BASE}/space/S1/folder").mock(
+        return_value=httpx.Response(200, json={"folders": [{"id": "F1", "lists": [{"id": "L2"}]}]})
+    )
+    respx.get(f"{BASE}/list/L1/task").mock(
+        return_value=httpx.Response(200, json={"tasks": [{"id": "t1"}], "last_page": True})
+    )
+    respx.get(f"{BASE}/list/L2/task").mock(
+        return_value=httpx.Response(200, json={"tasks": [{"id": "t2"}], "last_page": True})
+    )
+    with ClickUp("pk") as cu:
+        tasks = list(cu.iter_space_tasks("S1"))
+
+    assert [t["id"] for t in tasks] == ["t1", "t2"]
+
+
+@respx.mock
+def test_assign_puts_add_rem_format():
+    route = respx.put(f"{BASE}/task/T1").mock(
+        return_value=httpx.Response(200, json={"id": "T1"})
+    )
+    with ClickUp("pk") as cu:
+        cu.assign("T1", add=[1], rem=[2])
+
+    import json
+
+    assert json.loads(route.calls.last.request.content) == {
+        "assignees": {"add": [1], "rem": [2]}
+    }

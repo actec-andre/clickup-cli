@@ -87,16 +87,23 @@ Convenience methods (all return raw dicts/lists):
 cu.get_teams()                                  # {"teams": [...]}
 cu.get_spaces(team_id)                          # {"spaces": [...]}
 cu.get_space(space_id)
+cu.get_members(team_id)                          # [user dicts] — resolve assignee ids live
 cu.get_folders(space_id)                        # {"folders": [...]}
 cu.get_lists(folder_id)                         # {"lists": [...]}
 cu.get_folderless_lists(space_id)               # {"lists": [...]}
+cu.get_list(list_id)                            # single list incl. statuses
 cu.get_tasks(list_id, **filters)                # one page
 cu.iter_tasks(list_id, **filters)               # generator, auto-paginates
+cu.iter_space_tasks(space_id, **filters)        # generator over every list in a space
 cu.get_task(task_id)
 cu.create_task(list_id, name="...", **fields)
-cu.update_task(task_id, **fields)
+cu.update_task(task_id, **fields)               # assignees={"add":[id],"rem":[id]}; status=...
+cu.assign(task_id, add=[id], rem=[id])          # wraps the assignees add/rem format
 cu.delete_task(task_id)
 ```
+
+> Status **sets** (the dropdown options) are UI-only — API v2 can't create/edit/delete them;
+> you can only set a task's status *value* to one already on its list.
 
 ## Output
 
