@@ -75,6 +75,8 @@ clickup-cli check-auth                             # needs a real token in .env
 
 ## Sibling repos
 
-- `clickup` (separate repo, `/Users/andre/Documents/dev/claude/clickup`) — the typed,
-  async-first Python library + Obsidian sync scripts. Independent from this CLI.
 - `odoo-cli`, `gel-cli` — same standalone/pipx pattern for other systems.
+
+> Note: an older `clickup` repo (typed async library + a git-tracked `docs/` task
+> mirror) was retired in favor of this CLI. ClickUp is the source of truth; reach it
+> live via `clickup-cli` — there are no maintained local task copies anymore.
