@@ -69,8 +69,9 @@ def build_agent_info() -> dict[str, Any]:
         "known_ids": IDS,
         "patterns": {
             "list_spaces": "result = [s['name'] for s in cu.get_spaces(TEAM_ID)['spaces']]",
-            "list_tasks": "result = list(cu.iter_tasks(IDS['default_list']))",
-            "create_task": "result = cu.create_task(IDS['default_list'], name='New task', status='to do')",
+            "discover_lists": "result = cu.get_folderless_lists(IDS['space_odoo'])['lists']  # -> list ids",
+            "list_tasks": "result = list(cu.iter_tasks('901521388085'))  # pass a list_id explicitly (e.g. Odoo/Backlog)",
+            "create_task": "result = cu.create_task('901521388085', name='New task', status='to do')  # list_id",
             "update_status": "result = cu.update_task('TASK_ID', status='in progress')",
             "raw_endpoint": "result = cu.get('/team/{}/space'.format(TEAM_ID))",
         },

@@ -32,7 +32,6 @@ IDS = {
     "team": "90152385271",
     "space_odoo": "901510167199",
     "space_rhholding": "901510675913",
-    "default_list": "901522542210",
 }
 TEAM_ID = IDS["team"]
 

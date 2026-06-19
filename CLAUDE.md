@@ -1,8 +1,26 @@
 Project instructions for `clickup-cli` — a standalone, self-contained, exec-only CLI for
 the ClickUp API v2. Modeled on the sibling tools `odoo-cli exec` and `gel-cli`: each is its
 own repo, bundles its own client, depends on no shared library, and installs globally via
-pipx. This repo does **not** import the separate `clickup` Python library; that library is a
-behavioral reference only.
+pipx. It is self-contained — no shared library. (An older `clickup` typed-library/sync repo
+was retired in favor of this CLI; see the retirement note under "Sibling repos".)
+
+## Simplicity first (owner's standing preference)
+
+Andre wants this kept **as simple as possible — always**. Fewer concepts, fewer moving parts,
+and less to understand beat more features. Concretely:
+
+- **Default to exec-only.** Don't add subcommands or flags unless they *remove* complexity
+  rather than add surface area — `exec` already covers the long tail.
+- **Prefer removing over adding.** We retired the old `clickup` repo, dropped the `sync`
+  command, and removed the stale `default_list` ID for exactly this reason.
+- **One place to learn the tool:** `agent-info`. Keep it current instead of growing docs.
+- **When in doubt, ship the smaller thing.**
+
+This applies to the ClickUp *workflow* too, not just the CLI — and there the audience is what
+matters: **ClickUp is primarily for the (often non-technical) remaining staff to work with**, not
+for Andre or the CLI/agents. The CLI is just one way in; the staff in the web/mobile UI are the
+real users. So design the board for *them* — few plain-language status stages, few lists, few
+required fields, and exactly one clear owner per task so each person can see "what's mine".
 
 ## Architecture
 
@@ -44,7 +62,6 @@ Error categories map to exit codes: `config` → 2, `syntax`/`runtime` → 1.
 - Team/Workspace: `90152385271` (RHHOLDING)
 - Space Odoo: `901510167199`
 - Space RHHOLDING: `901510675913`
-- Default List: `901522542210`
 
 `IDS` and `TEAM_ID` are injected into the exec namespace and drive `agent-info`. Change them
 in `runner.py` only.
