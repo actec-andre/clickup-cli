@@ -26,16 +26,14 @@ from clickup_cli.client import ClickUp, ClickUpError
 
 SCHEMA = 1
 
-# Single source of truth for the RHHOLDING workspace IDs. Used by the exec
-# namespace and by `agent-info`.
-IDS = {
-    "team": "90152385271",
-    "space_marketing": "901511188252",
-    "space_magento": "901511189063",
-    "space_pim": "901511194855",
-    "space_operations": "901511222465",
-}
-TEAM_ID = IDS["team"]
+# The workspace this CLI talks to. Set CLICKUP_TEAM_ID to point it somewhere else.
+#
+# Space and list ids are deliberately NOT hard-coded any more. They go stale — two of the
+# four that used to live here had been deleted and returned "Space not found" to anyone who
+# trusted them. Resolve them at runtime instead: `spaces()` in the exec namespace returns the
+# live name -> id mapping.
+TEAM_ID = os.environ.get("CLICKUP_TEAM_ID", "90152385271")
+IDS = {"team": TEAM_ID}
 
 # Error category -> process exit code.
 EXIT_CODES = {"config": 2, "syntax": 1, "runtime": 1}
@@ -81,11 +79,20 @@ def to_jsonable(obj: Any, _seen: set[int] | None = None) -> Any:
 
 
 def _build_namespace(client: ClickUp) -> dict[str, Any]:
+    def spaces() -> dict[str, str]:
+        """Live ``{space name: id}`` for the workspace.
+
+        Space ids change when spaces are renamed, archived or deleted, so resolve them here
+        rather than pasting an id into a script that will outlive it.
+        """
+        return {s["name"]: s["id"] for s in client.get_spaces(TEAM_ID)["spaces"]}
+
     return {
         "cu": client,
         "ClickUpError": ClickUpError,
         "IDS": IDS,
         "TEAM_ID": TEAM_ID,
+        "spaces": spaces,
         "json": json_module,
         "os": os,
         "datetime": datetime,

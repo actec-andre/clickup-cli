@@ -64,17 +64,21 @@ is captured separately. Every run returns a stable envelope:
 
 Error categories map to exit codes: `config` → 2, `syntax`/`runtime` → 1.
 
-## Key IDs (single source of truth: `runner.IDS`)
+## IDs: resolve them, do not hard-code them
 
-- Team/Workspace: `90152385271` (RHHOLDING)
-- Space Marketing: `901511188252` (was "Monday" — Monday.com import leftover)
-- Space Magento: `901511189063`
-- Space Products PIM: `901511194855`
-- Space Operations: `901511222465`
+The workspace is the only id the code holds: `TEAM_ID` in `runner.py`, overridable with the
+`CLICKUP_TEAM_ID` environment variable. It is injected into the exec namespace together with
+`IDS` (which now contains just that one key) and drives `agent-info`.
 
-`IDS` and `TEAM_ID` are injected into the exec namespace and drive `agent-info`. Change them
-in `runner.py` only. Member/person IDs are deliberately **not** hard-coded here — resolve them
-live via `cu.get_members(TEAM_ID)` (ClickUp is the source of truth).
+**Space, list and member ids are resolved live.** This file used to list four spaces; two of
+them had been deleted and returned "Space not found" to anyone who trusted the list. ClickUp is
+the source of truth, so ask it:
+
+```bash
+clickup-cli exec -c "result = spaces()" --json                       # {name: id}
+clickup-cli exec -c "result = cu.get_folderless_lists(spaces()['Magento'])['lists']" --json
+clickup-cli exec -c "result = {m['email']: m['id'] for m in cu.get_members(TEAM_ID)}" --json
+```
 
 ## API notes
 

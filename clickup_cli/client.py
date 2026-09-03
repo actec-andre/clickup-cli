@@ -49,7 +49,7 @@ class ClickUp:
     Usage::
 
         with ClickUp(token="pk_...") as cu:
-            spaces = cu.get_spaces("90152385271")["spaces"]
+            spaces = cu.get_spaces(team_id)["spaces"]
     """
 
     def __init__(

@@ -8,10 +8,18 @@ alongside the sibling tools `odoo-cli` and `gel-cli`.
 ## Install
 
 ```bash
-pipx install --editable /Users/andre/Documents/dev/claude/clickup-cli
+pipx install git+ssh://git@github.com/actec-andre/clickup-cli
 ```
 
-Or for local development:
+The repository is private, so this needs an SSH key that has access to it.
+
+From a local clone, so that edits take effect immediately:
+
+```bash
+pipx install --editable /path/to/clickup-cli
+```
+
+For development with the test suite:
 
 ```bash
 cd clickup-cli
@@ -130,10 +138,16 @@ Without `--json`, results render via Rich and errors print in red to stderr. Add
 | `1` | Syntax or runtime error in the executed code |
 | `2` | Configuration error (e.g. missing token) |
 
-## Known IDs (RHHOLDING)
+## Workspace and ids
 
-| Key | ID |
-| --- | --- |
-| `team` (workspace) | `90152385271` |
-| `space_odoo` | `901510167199` |
-| `space_rhholding` | `901510675913` |
+The only id the CLI holds is the workspace, available in the exec namespace as `TEAM_ID` and
+overridable with the `CLICKUP_TEAM_ID` environment variable.
+
+**Space and list ids are not stored anywhere.** They go stale — an earlier version of this file
+listed two spaces that had since been deleted, and the code carried two more of the same kind.
+Resolve them at runtime instead:
+
+```bash
+clickup-cli exec -c "result = spaces()" --json                      # {name: id}, live
+clickup-cli exec -c "result = cu.get_folderless_lists(spaces()['Magento'])['lists']" --json
+```
